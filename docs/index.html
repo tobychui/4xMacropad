@@ -136,8 +136,8 @@
         <button class="circular ui black button" onclick="loadConfigFromFile();">
             <i class="folder open icon"></i> Load Config
         </button>
-        <button class="circular ui teal right floated button" onclick="loadConfigFromFile();">
-            <i class="download icon"></i> Download .ino File
+        <button class="circular ui teal right floated button" onclick="generateArduinoCode();">
+            <i class="download icon"></i> Download .ino Package
         </button>
         <div class="ui divider"></div>
         <small style="color: rgb(207, 207, 207);">CopyRight tobychui feat. project imuslab</small>
@@ -525,11 +525,7 @@
                     // see FileSaver.js
                     saveAs(content, "macrokey.zip");
                 });
-
-
-                //download("macrokey.ino", templateCode);
             })
-            //Generate code from sequences
             
         }
 
