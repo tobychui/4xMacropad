@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 
+        
+        Develop by tobychui
+        All Right Reserved
+    
+    -->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="team" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="icon" href="./img/pattern.png" />
+
+    <!-- Framework-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://unpkg.com/typed.js@2.0.132/dist/typed.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+
+    <script src="main.js"></script>
+
+    <!-- Font Replacement -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet"> 
+
+    <!-- HTML Meta Tags -->
+    <title>4-key Macropad | imuslab</title>
+    <meta name="description" content="Simple and easy to use compile config Macropad designed by imuslab">
+
+    <style>
+        body{
+            background-color: black;
+        }
+
+        #keypad{
+            text-align: center;
+            width: 100%;
+            height: 360px;
+        }
+
+        #titleText{
+            text-align: center;
+            color: white;
+        }
+
+        /* SVG internal css */
+        .macrobutton{
+            cursor: pointer;
+        }
+
+        .macroswitch{
+            cursor: pointer;
+        }
+
+        .actiongroup{
+            color: white;
+            margin-top: 0.4em;
+        }
+
+        .actiongroup .button{
+            color: rgb(29, 29, 29);
+            background-color: rgb(238, 238, 238);
+            border: 1px solid rgb(71, 71, 71);
+        }
+
+        .white.button{
+            color: rgb(236, 236, 236);
+            background-color: rgb(20, 20, 20);
+            border: 1px solid rgb(71, 71, 71);
+            margin-top: 0.4em;
+        }
+
+        #keyseq{
+            height: 300px;
+            overflow-y:scroll;
+            border: 1px solid white; 
+            padding: 0.4em;
+            padding-left: 1.2em;
+            padding-right: 1.2em;
+        }
+
+        #keyseq.A{
+            border: 1px solid #2EA7E0;
+        }
+
+        #keyseq.B{
+            border: 1px solid red;
+        }
+    </style>
+</head>
+<body> 
+    <br>
+    <div class="ui text container">
+        <div id="keypad">
+
+        </div>
+        <p id="titleText" style="height: 60px;"></p>
+        <div id="keyseq" class="A">
+
+        </div>
+        <div class="ui divider"></div>
+        <p style="color: white; text-align: center;">Advance Key Options</p>
+        <div style="width: 100%;" align="center">
+            <button class="circular ui basic green button" onclick="addConsumerKey();">
+                <i class="add icon"></i> Add Consumer Key (Select Below)
+            </button>
+            <button class="circular ui basic teal button" onclick="addDelayTime();">
+                <i class="hourglass half icon"></i> Add Delay
+            </button>
+            <button class="circular ui basic red button" onclick="deleteLastAction();">
+                <i class="remove icon"></i> Delete Last Keystroke(s)
+            </button>
+            <div style="margin-top: 0.4em;">
+                <select class="ui mini search black fluid dropdown" id="complexKeys">
+                    <option value="">HID Consumer Keys</option>
+
+                </select>
+            </div>
+        </div>
+        <div id="specialKeys" style="width: 100%; margin-top: 1em;" align="center">
+
+        </div>
+        <div class="ui divider"></div>
+        <p style="color: white; text-align: center;">Save, Load and Export Options</p>
+        <button class="circular ui black button" onclick="saveConfigAsFile();">
+            <i class="save icon"></i> Save Configs
+        </button>
+        <button class="circular ui black button" onclick="loadConfigFromFile();">
+            <i class="folder open icon"></i> Load Config
+        </button>
+        <button class="circular ui teal right floated button" onclick="loadConfigFromFile();">
+            <i class="download icon"></i> Download .ino File
+        </button>
+        <div class="ui divider"></div>
+        <small style="color: rgb(207, 207, 207);">CopyRight tobychui feat. project imuslab</small>
+        <br><br><br>
+    </div>
+    <script>
+        //Load in the layouts and startup animations
+        let typed;
+        let currentMode = 0; //0=A. 1=B
+        let codekeyMap = {}; //Lookup key string by keyCode
+        let charmap = {}; //Unicode mapping, currently only support zh-tw
+
+        //Runtime Environments
+        let editingKey = 0;
+        let keySeqA = {
+            "1":"",
+            "2":"",
+            "3":"",
+            "4":"",
+        };
+
+        let keySeqB = {
+            "1":"",
+            "2":"",
+            "3":"",
+            "4":"",
+        };
+
+        $("#keypad").hide();   
+        
+        //Load keymap
+        $.get("keymap.json", function(data){
+            charmap = data;
+        });
+
+        //Preload export dependencies
+        let exportDependencies = ["USBconstant.c", "USBconstant.h", "USBhandler.c", "USBhandler.h", "USBHIDMediaKeyboard.c", "USBHIDMediaKeyboard.h"];
+        let dependenciesPayload = {};
+        exportDependencies.forEach(function(filename){
+            $.get("template/src/userUsbHidMediaKeyboard/" + filename, function(data){
+                dependenciesPayload[filename] = data;
+            });
+        });
+
+        //Load the keyboard layout
+        $("#keypad").load("img/layout.svg", function(){
+            //Print Welcome message
+            $("#keypad").transition('fly down');
+                typed = new Typed('#titleText', {
+                strings: ['<h1 style="margin: 0;">The 4-keys Macropad</h1><p>Pick a key and start typing :)</p>'],
+                typeSpeed: 50,
+            });
+            setTimeout(function(){
+                $("#titleText").append("");
+            }, 3000);
+
+            //Bind events to the buttons
+            $(".macrobutton").mouseenter(function(){
+                if (!$(this).hasClass("active")){
+                    let targetFillObject = $(this).find("path")[0];
+                    $(targetFillObject).attr("fill", "#262626");
+                }
+            });
+
+            $(".macrobutton").mouseleave(function(){
+                if (!$(this).hasClass("active")){
+                    let targetFillObject = $(this).find("path")[0];
+                    $(targetFillObject).attr("fill", "black");
+                }
+            });
+
+            $(".macrobutton").on("click", function(){
+                handleKeySelect($(this).attr("keyid"));
+            });
+
+            //Bind events to the switch
+            $(".macroswitch").mouseenter(function(){
+                $(this).attr("fill", "#262626");
+            });
+
+            $(".macroswitch").mouseleave(function(){
+                $(this).attr("fill", "black");
+            });
+
+            $(".macroswitch").on("click", function(){
+                toggleMode();
+            });
+
+            //Make sure the svg is fluid with the container
+            $("#keypad").find("svg").attr("width", "100%");
+        });
+        
+        //Render special keys
+        let speckey = "~!@#$%^&*()_+{}|:\"?<>";
+        for (const c of speckey) {
+            $("#specialKeys").append(`<div class="ui mini white button" onclick="insertSpecialChar(this);" data-value="${c}">${c}</div>`);
+        }
+
+        for (const [key, value] of Object.entries(keycodeMap)) {
+            $("#specialKeys").append(`<div class="ui mini white button" onclick="clickSpecialFunctionKey(this);" data-value="${key}">${key.substr(4).split("_").join(" ")}</div>`);
+            codekeyMap[value] = key;
+        }
+
+        for (const [key, value] of Object.entries(mediaKeycode)) {
+            $("#complexKeys").append(`<option value="${key}">${key.split("_").join(" ")}</option>`);
+            codekeyMap[value] = key;
+        }
+
+        $(".dropdown").dropdown();
+
+
+        function toggleMode(){
+            //Save the current key config
+            saveCurrentKeyConfig();
+
+            if (currentMode == 0){
+                //Mode B
+                currentMode = 1;
+                $(".macroswitch_latch").attr("x", "140.96");
+                $(".modeALed").attr("fill", "black");
+                $(".modeBLed").attr("fill", "red");
+                $("#keyseq").attr("class", "B");
+            }else{
+                //Mode A
+                currentMode = 0;
+                $(".macroswitch_latch").attr("x", "115.387");
+                $(".modeALed").attr("fill", "#2EA7E0");
+                $(".modeBLed").attr("fill", "black");
+                $("#keyseq").attr("class", "A");
+            }
+
+            loadCurrentKeyConfig();
+        }
+
+        function getKeyObjectById(keyid){
+            let targetKeyDOMObject;
+            $(".macrobutton").each(function(){
+                if ($(this).attr("keyid") == keyid){
+                    targetKeyDOMObject = $(this);
+                }
+            });
+            return targetKeyDOMObject;
+        }
+       
+        function handleKeySelect(keyid){
+            //Clear all previous selected key
+            $(".macrobutton.active").each(function(){
+                let targetFillObject = $(this).find("path")[0];
+                $(targetFillObject).attr("fill", "black");
+                $(this).removeClass('active');
+            });
+
+            //Highlight the key
+            let targetkeyObject = getKeyObjectById(keyid);
+            $(targetkeyObject).addClass('active');
+            let targetFillObject = $(targetkeyObject).find("path")[0];
+            $(targetFillObject).attr("fill", "#f7f7f7");
+
+            //Save previous key configs
+            saveCurrentKeyConfig();
+
+            //Set editing key id
+            editingKey = keyid;
+
+            //Clear and load corrisponding key sequence
+            loadCurrentKeyConfig();
+        }
+
+        //Load the key config using currentMode and editingKey
+        function loadCurrentKeyConfig(){
+            let usingKeySeq = keySeqA;
+            if (currentMode == 1){
+                usingKeySeq = keySeqB;
+            }
+            $("#keyseq").html(usingKeySeq[editingKey]);
+        }
+
+        //Save the key config using currentMode and editingkey
+        function saveCurrentKeyConfig(){
+            let usingKeySeq = keySeqA;
+            if (currentMode == 1){
+                usingKeySeq = keySeqB;
+            }
+            usingKeySeq[editingKey] = $("#keyseq").html();
+        }
+
+
+        /*
+            Key Listener
+        */
+       let ctrlHolding = false;
+       let shiftHolding = false;
+       let altHolding = false;
+       let notSupportKeycode = [91, 144, 19, 145, 44];
+       function keyNotSupported(keycode){
+            return notSupportKeycode.includes(keycode);
+       }
+        $(document).on("keydown", function(e){
+            let focusedObject = $(':focus');
+            if ($(focusedObject).is("input")){
+                //User is searching stuffs
+                return;
+            }else if (editingKey == 0){
+                //No key selected
+                $(".macrobutton").transition('shake');
+                return
+            }
+    
+            e.preventDefault();
+            let keyCode = e.keyCode;
+            if (keyCode == 16){
+                //Shift
+                shiftHolding = true;
+            }else if (keyCode == 17){
+                //Ctrl
+                ctrlHolding = true;
+            }else if (keyCode == 18){
+                //Alt
+                altHolding = true;
+            }
+            
+        }); 
+
+        $(document).on("keyup", function(e){
+            let focusedObject = $(':focus');
+            if ($(focusedObject).is("input")){
+                //User is searching stuffs
+                return;
+            }else if (editingKey == 0){
+                //No key selected
+                //$(".macrobutton").transition('shake');
+                return
+            }else if (keyNotSupported(e.keyCode)){
+                //This key is not supported
+                console.log("This key is not supported: " + e.keyCode + "(" + e.key + ")");
+                return
+            }
+    
+            e.preventDefault();
+            let keyCode = e.keyCode;
+            if (keyCode == 16){
+                //Shift
+                shiftHolding = false;
+            }else if (keyCode == 17){
+                //Ctrl
+                ctrlHolding = false;
+            }else if (keyCode == 18){
+                //Alt
+                altHolding = false;
+            }else{
+                //Other keys
+                let keyString = e.key;
+
+                insertChar(keyString, codekeyMap[keyCode]);
+            }
+        });
+
+        function insertSpecialChar(btn){
+            if (editingKey == 0){
+                //No key selected
+                $(".macrobutton").transition('shake');
+                return
+            }
+            let charValue = $(btn).attr("data-value");
+            insertChar(charValue.split("_").join(" "), charValue);
+        }
+
+        function clickSpecialFunctionKey(btn){
+            if (editingKey == 0){
+                //No key selected
+                $(".macrobutton").transition('shake');
+                return
+            }
+            let charValue = $(btn).attr("data-value");
+            let displayText = charValue.split("_").join(" ")
+            displayText = displayText.replace("KEY ", "");
+            insertChar(displayText, charValue);
+        }
+
+        //Add comsumer key from dropdown
+        function addConsumerKey(){
+            let dropdownValue = $("#complexKeys").dropdown("get value");
+            if (dropdownValue == ""){
+                alert("Select a special media key from the list below before add");
+                return
+            }
+
+            insertChar(dropdownValue.split("_").join(" "), dropdownValue, true);
+        }
+
+        function insertChar(charString, value, isMediaKey = false){
+            let indexNumber = $(".actiongroup").length + 1;
+            let payload = encodeURIComponent(JSON.stringify([charString, value, isMediaKey, shiftHolding, ctrlHolding, altHolding]));
+            let html = `<div class="actiongroup" data="${payload}">`;
+            if (shiftHolding){
+                html += `<div class="ui small button">SHIFT</div> + `;
+            }
+
+            if (ctrlHolding){
+                html += `<div class="ui small button">CTRL</div> + `;
+            }
+
+            if (altHolding){
+                html += `<div class="ui small button">ALT</div> + `;
+            }
+
+            html += `<div class="ui small button">${charString}</div>`;
+            html += `</div>`;
+            $("#keyseq").append(html);
+
+            console.log(shiftHolding, ctrlHolding, altHolding, charString, value);
+
+            //Scroll to bottom of the div
+            $("#keyseq")[0].scrollTop = $("#keyseq")[0].scrollHeight;
+        }
+
+        function deleteLastAction(){
+            $(".actiongroup").last().remove();
+            $("#keyseq")[0].scrollTop = $("#keyseq")[0].scrollHeight;
+        }
+
+        function addDelayTime(){
+            if (editingKey == 0){
+                //No key selected
+                $(".macrobutton").transition('shake');
+                return
+            }
+
+            let delayTime = prompt("Enter delay time in ms (1000ms = 1s)", "100");
+            if (delayTime == null || delayTime == "") {
+                //Cancel
+                return;
+            }else{
+                delayTime = parseInt(delayTime);
+                if (isNaN(delayTime)){
+                    alert("Invalid delay value!");
+                    return
+                }
+
+                $("#keyseq").append(`<div class="actiongroup delay" value="${delayTime}"><i class="hourglass half icon"></i> Delay ${delayTime}ms</div>`);
+
+            }
+        }
+
+        /*
+            Generate Arduino Code
+        */
+
+        function generateArduinoCode(){
+            //Save the config before generating
+            saveCurrentKeyConfig();
+
+            //Get template from template/template.ino
+            $.get("template/template.ino", function(data){
+                let templateCode = data;
+
+                //Replace the template code segment
+                templateCode = templateCode.replace("{{codeA1}}", generateCodeFromSequence(keySeqA, 1));
+                templateCode = templateCode.replace("{{codeA2}}", generateCodeFromSequence(keySeqA, 2));
+                templateCode = templateCode.replace("{{codeA3}}", generateCodeFromSequence(keySeqA, 3));
+                templateCode = templateCode.replace("{{codeA4}}", generateCodeFromSequence(keySeqA, 4));
+
+                templateCode = templateCode.replace("{{codeB1}}", generateCodeFromSequence(keySeqB, 1));
+                templateCode = templateCode.replace("{{codeB2}}", generateCodeFromSequence(keySeqB, 2));
+                templateCode = templateCode.replace("{{codeB3}}", generateCodeFromSequence(keySeqB, 3));
+                templateCode = templateCode.replace("{{codeB4}}", generateCodeFromSequence(keySeqB, 4));
+
+                let arduinoCode = templateCode;
+
+                //Get other depednencies and pack it into a zip file
+                var zip = new JSZip();
+                //Generate a arduino compatible folder structure
+
+                var rootfolder = zip.folder("macrokey");
+                rootfolder.file("macrokey.ino", arduinoCode);
+
+                //Inject the dependencies into the userUsbHidMediaKeyboard folder
+                var srcfolder = rootfolder.folder("src");
+                var usbHidFolder = srcfolder.folder("userUsbHidMediaKeyboard");
+                for (const [filename, content] of Object.entries(dependenciesPayload)) {
+                    usbHidFolder.file(filename, content);
+                }
+                
+                zip.generateAsync({type:"blob"}).then(function(content) {
+                    // see FileSaver.js
+                    saveAs(content, "macrokey.zip");
+                });
+
+
+                //download("macrokey.ino", templateCode);
+            })
+            //Generate code from sequences
+            
+        }
+
+        /*
+            Config Save and Load 
+        */
+        //Seq: keyseqA or B, id = {1/2/3/4} (aka key id, see PCB silkscreen)
+        function generateCodeFromSequence(Seq, id){
+            //Save the config before generating
+            saveCurrentKeyConfig();
+            function getCodeFromSeq(html){
+                let code = '';
+                //console.log(html);
+                //console.log($(html));
+                $(html).each(function(){
+                    let keyCombination = $(this).attr("data");
+                    if (keyCombination == undefined){
+                        return;
+                    }
+                    keyCombination = JSON.parse(decodeURIComponent(keyCombination));
+
+                    let shiftHolding = keyCombination[3];
+                    let ctrlHolding = keyCombination[4];
+                    let altHolding = keyCombination[5];
+
+                    if (shiftHolding){
+                        code += `Keyboard_press(KEY_LEFT_SHIFT);\ndelay(30);\n`;
+                    }
+
+                    if (ctrlHolding){
+                        code += `Keyboard_press(KEY_LEFT_CTRL);\ndelay(30);\n`;
+                    }
+
+                    if (altHolding){
+                        code += `Keyboard_press(KEY_LEFT_ALT);\ndelay(30);\n`;
+                    }
+
+            
+                    if (keyCombination[2] == true){
+                        //Ths is a media key. Use value from [1]
+                        code += `Consumer_write(${keyCombination[1]});\ndelay(30);\n`;
+                    }else{
+                        //This is a normal key. Use value from [0]
+                        code += `Keyboard_write(${remapValueToHIDKeyboardConst(keyCombination[0])});\ndelay(30);\n`;
+                    }
+
+                    if (shiftHolding){
+                        code += `Keyboard_press(KEY_LEFT_SHIFT);\ndelay(30);\n`;
+                    }
+
+                    if (ctrlHolding){
+                        code += `Keyboard_press(KEY_LEFT_CTRL);\ndelay(30);\n`;
+                    }
+
+                    if (altHolding){
+                        code += `Keyboard_press(KEY_LEFT_ALT);\ndelay(30);\n`;
+                    }
+
+                });
+                
+                return code;
+            }
+
+            let codeSnippet = getCodeFromSeq(Seq[id]);
+            return codeSnippet;
+        }
+
+        function saveConfigAsFile(){
+            let config = JSON.stringify([keySeqA, keySeqB]);
+            download(Date.now() + "_macro-conf.json", config);
+        }
+
+        function loadConfigFromFile(){
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.onchange = e => { 
+                let files = e.target.files; 
+                for (var i = 0; i < files.length; i++){
+                    let read = new FileReader();
+                    read.readAsBinaryString(files[i]);
+                    read.onloadend = function(){
+                        //Content of the file selected
+                        try{
+                            handleKeySelect(1);
+                            let macroSequences = JSON.parse(read.result);
+                            keySeqA = macroSequences[0];
+                            keySeqB = macroSequences[1];
+                            $("#selectedKey").html('<i class="keyboard icon"></i> Currently Editing Key: '+ 1);
+                            $($(".macrokey")[0]).addClass("active");
+                            loadCurrentKeyConfig();
+                        }catch(ex){
+                            alert("Unable to load config file. See console for more info.")
+                            console.log(ex);
+                        }
+                        
+                    }
+                }
+            }
+            input.click();
+        }
+
+        function handleFileSelect (e) {
+            var files = e.target.files;
+            if (files.length < 1) {
+                alert('select a file...');
+                return;
+            }
+            var file = files[0];
+            var reader = new FileReader();
+            reader.onload = onFileLoaded;
+            reader.readAsDataURL(file);
+        }
+
+        //Download functions
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+
+    </script>
+</body>
+</html>

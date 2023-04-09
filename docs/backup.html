@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 
+        
+        Develop by tobychui
+        All Right Reserved
+    
+    -->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="team" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="icon" href="./img/pattern.png" />
+
+    <!-- Framework-->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script src="main.js"></script>
+    <!-- Font Replacement -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet"> 
+
+    <!-- HTML Meta Tags -->
+    <title>QuadK Macropad | imuslab</title>
+    <meta name="description" content="Simple and easy to use compile config Macropad designed by imuslab">
+
+    <style>
+        .headBanner{
+            width: 100%;
+            height: 300px;
+            background: url(img/tile_background.png);
+            background-position: 5px 5px;
+            position: relative;
+        }
+
+        .headBanner .content, .headBanner .header{
+            color: rgb(44, 44, 44);
+        }
+
+        #siteheader{
+            position: absolute;
+            bottom: 2em;
+            left: 2em;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 0.4em;
+        }
+
+        .grabbable {
+            cursor: move; /* fallback if grab cursor is unsupported */
+            cursor: grab;
+            cursor: -moz-grab;
+            cursor: -webkit-grab;
+        }
+
+        /* (Optional) Apply a "closed-hand" cursor during drag operation. */
+        .grabbable:active {
+            cursor: grabbing;
+            cursor: -moz-grabbing;
+            cursor: -webkit-grabbing;
+        }
+
+    </style>
+</head>
+<body> 
+    <div class="headBanner">
+        <br>
+        <div id="siteheader" class="ui basic segment">
+            <h2 class="ui header">
+                <img src="img/pattern.png">
+                <div class="content">
+                    Macropad.ino Generator | imuslab
+                    <div class="sub header">Configure and generate the code for your macropad</div>
+                </div>
+            </h2>
+        </div>
+        
+    </div>
+    <Br>
+    <div class="ui container">
+        <p></p>
+        <div class="ui segment">
+            <div class="ui buttons" id="keylist">
+                <button class="ui basic button disabled">Select a key to start edit</button>
+            </div>
+           
+            <div class="ui right floated buttons">
+                <button class="ui yellow icon button" title="Load Config File" onclick="loadConfigFromFile();"><i class="ui folder open icon"></i></button>
+                <button class="ui icon button" title="Save Config as File" onclick="saveConfigAsFile();"><i class="ui save icon"></i></button>
+                <button class="ui green icon button" title="Download Arduino Code"><i class="ui download icon"></i></button>
+            </div>
+        </div>
+        <div class="ui segment">
+            <div id="selectedKey">
+                <i class="ui up arrow icon"></i> Select a key to start edit
+            </div>
+            <div id="actionList" class="ui basic segment">
+
+            </div>
+            <div id="warningField" class="ui basic segment">
+
+            </div>
+        </div>
+        <div class="ui segment">
+            <div id="keyaction" class="ui selection dropdown actiontype">
+                <input type="hidden" value="write">
+                <i class="dropdown icon"></i>
+                <div class="default text">Action</div>
+                <div class="scrollhint menu">
+                    <div class="item" data-value="press">Press & Hold</div>
+                    <div class="item" data-value="write">Send Key</div>
+                    <div class="item" data-value="release">Release Hold</div>
+                </div>
+            </div>
+            <div id="keytype" class="ui selection dropdown keytype">
+                <input type="hidden" value="func">
+                <i class="dropdown icon"></i>
+                <div class="default text">Key</div>
+                <div class="scrollhint menu">
+                    <div class="item" data-value="func">Function Key</div>
+                    <div class="item" data-value="ascii">ASCII Key</div>
+                </div>
+            </div>
+            <div id="keyfunc" class="ui selection dropdown">
+                <input type="hidden">
+                <i class="dropdown icon"></i>
+                <div class="default text">Function Key</div>
+                <div class="scrollhint menu" id="funckey_list">
+                    
+                </div>
+            </div>
+            <div id="keychar" class="ui selection dropdown" style="display:none;">
+                <input type="hidden">
+                <i class="dropdown icon"></i>
+                <div class="default text">ASCII Key</div>
+                <div class="scrollhint menu" id="ascii_list">
+
+                </div>
+            </div>
+            <br><br>
+            <button id="addbtn" class="ui basic disabled button" onclick="addAction();"><i class="ui add icon"></i> Add Action</button>
+        </div>
+    </div>
+    <script>
+        //Hardware configurations
+        let macroSequences = {};
+        let numberOfKeys = 4;
+        
+        //Runtime Environments
+        let editingKey = 0;
+
+        //Generate all function key values
+        for (const [key, value] of Object.entries(keycodeMap)) {
+            $("#funckey_list").append(`<div class="item" data-value="${key}">${key.substr(4).split("_").join(" ")}</div>`);
+        }
+
+        //Generate all ascii key values
+        let chars = "abcdefghijklmnopqrstuvwxyz";
+        for (const c of chars) {
+            $("#ascii_list").append(`<div class="item" data-value="${c.toUpperCase()}">${c.toUpperCase()}</div>`);
+            $("#ascii_list").append(`<div class="item ascii_lower" data-value="${c}">${c}</div>`);
+        }
+
+        let numerics = "1234567890-=!@#$%^&*()_+~`";
+        for (const c of numerics) {
+            $("#ascii_list").append(`<div class="item ascii_lower" data-value="${c}">${c}</div>`);
+        }
+
+        //Generate the base of macro sequences
+        for (var i = 1; i <= numberOfKeys; i++){
+            macroSequences[i] = [];
+            //Generate keylist
+            $("#keylist").append(`<button class="ui basic button macrokey" keyid="${i}">${i}</button>`);
+        }
+
+        //Bind events for macrokeys
+        $(".macrokey").on("click", function(){
+            let keyID = $(this).attr("keyid");
+            $(".macrokey.active").removeClass("active");
+            $(this).addClass("active");
+            setEditingKeyId(keyID);
+            $("#addbtn").removeClass('disabled');
+        });
+
+
+        function setEditingKeyId(keyID){
+            editingKey = keyID;
+            $("#selectedKey").html('<i class="keyboard icon"></i> Currently Editing Key: '+ keyID);
+            //Load previous actions if exists
+            renderMacroSequence();
+        }
+
+        function renderMacroSequence(){    
+            let actions = macroSequences[editingKey];
+            $("#actionList").html("");
+            $("#warningField").html("");
+            if (actions.length == 0){
+                $("#warningField").append(`<small>No action is set for this key. Pick a function and press "Add Action" in the menu below.</small>`);
+            }else{
+                //Render the actions
+                let holdLevel = 0;
+                let actionid = 0;
+                actions.forEach(function(action){
+                    let actionType = action.type;
+                    if (actionType == "press"){
+                        actionType = "Press & Hold: ";
+                        holdLevel++;
+                    }else if (actionType == "release"){
+                        actionType = "Release Hold: ";
+                        holdLevel--;
+                    }else if (actionType == "write"){
+                        actionType = "Send Key: ";
+                    }
+
+                    let leftBorderStyle = "";
+                    if (holdLevel > 0){
+                        let thickness = 1 * holdLevel;
+                        leftBorderStyle = `border-left: ${thickness}em solid #b2e6f7;`;
+                    }
+                    $("#actionList").append(`<div class="ui segment actionstep ui-state-default grabbable" count="${actionid}" style="${leftBorderStyle}">
+                        ${actionType} ${action.value}
+                        <button onclick="deleteAction(this);" title="Delete Action" style="margin-top: -0.4em;" class="ui circular red basic tiny right floated icon button"><i class="red remove icon"></i></button>
+                    </div>`);
+
+                    actionid++;
+                });
+
+                if (holdLevel > 0){
+                    //Some key is not released yet
+                    $("#warningField").append(`<div class="ui yellow message">
+                        <i class="exclamation triangle icon"></i> ${holdLevel} key(s) are being held. Remember to release it!
+                    </div>`);
+                }else if (holdLevel < 0){
+                    $("#warningField").append(`<div class="ui red message">
+                        <i class="remove icon"></i> ${holdLevel * -1} key(s) are set to relese but not pressed
+                    </div>`);
+                }
+            }
+        }
+
+        function addAction(){
+            let actionType = $("#keyaction").dropdown("get value");
+            let keytype = $("#keytype").dropdown("get value");
+            let keyvalue = "";
+            let cmd = "";
+
+            if (keytype == "func"){
+                //Fn
+                keyvalue = $("#keyfunc").dropdown("get value");
+                
+                if (actionType == "press"){
+                    cmd = `Consumer_press(${keyvalue});`;
+                }else if (actionType == "release"){
+                    cmd = `Consumer_release(${keyvalue});`;
+                }else if (actionType == "write"){
+                    cmd = `Consumer_press(${keyvalue});\n`;
+                    cmd += `delay(100);\n`;
+                    cmd += `Consumer_release(${keyvalue});`;
+                }
+            }else{
+                //ascii
+                keyvalue = $("#keychar").dropdown("get value");
+                
+                if (actionType == "press"){
+                    cmd = `Keyboard_press('${keyvalue}');`;
+                }else if (actionType == "release"){
+                    cmd = `Keyboard_release('${keyvalue}');`;
+                }else if (actionType == "write"){
+                    cmd = `Keyboard_write('${keyvalue}');`;
+                }
+            }
+
+            if (keyvalue == ""){
+                alert("No key selected");
+                return;
+            }
+            
+            let actionObject = {
+                "type": actionType,
+                "value": keyvalue,
+                "cmd": cmd
+            };
+            console.log(actionObject);
+
+            macroSequences[editingKey].push(actionObject);
+            renderMacroSequence();
+
+            $( "#actionList" ).sortable();
+
+        }
+
+        function deleteAction(object){
+            let targetActionField = $(object).parent();
+            let count = $(targetActionField).attr("count");
+            let newSeq = macroSequences[editingKey].splice(count, 1);
+            macroSequences[editingKey] = newSeq;
+            console.log(object);
+            $(targetActionField).remove();
+            renderMacroSequence();
+        }
+
+        function saveConfigAsFile(){
+            let config = JSON.stringify(macroSequences);
+            download(Date.now() + "_macro-conf.json", config);
+        }
+
+        function loadConfigFromFile(){
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.onchange = e => { 
+                let files = e.target.files; 
+                for (var i = 0; i < files.length; i++){
+                    let read = new FileReader();
+                    read.readAsBinaryString(files[i]);
+                    read.onloadend = function(){
+                        //Content of the file selected
+                        try{
+                            macroSequences = JSON.parse(read.result);
+                            editingKey = 1;
+                            $("#selectedKey").html('<i class="keyboard icon"></i> Currently Editing Key: '+ 1);
+                            $($(".macrokey")[0]).addClass("active");
+                            renderMacroSequence();
+                        }catch(ex){
+                            alert("Unable to load config file. See console for more info.")
+                            console.log(ex);
+                        }
+                        
+                    }
+                }
+            }
+            input.click();
+        }
+
+        function handleFileSelect (e) {
+            var files = e.target.files;
+            if (files.length < 1) {
+                alert('select a file...');
+                return;
+            }
+            var file = files[0];
+            var reader = new FileReader();
+            reader.onload = onFileLoaded;
+            reader.readAsDataURL(file);
+        }
+
+        //Download functions
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/json;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+
+
+        //Init dropdown
+        $('.dropdown').dropdown();
+        $(".actiontype").dropdown({
+            onChange: function(value, text, $selectedItem) {
+                if (value == "write"){
+                    $(".ascii_lower").show();
+                }else{
+                    $(".ascii_lower").hide();
+                }
+            }
+        });
+
+
+        $(".keytype").dropdown({
+            onChange: function(value, text, $selectedItem) {
+                console.log(value);
+                if (value == "func"){
+                    $("#keyfunc").show();
+                    $("#keychar").hide();
+                }else{
+                    $("#keyfunc").hide();
+                    $("#keychar").show();
+                }
+            } 
+        });
+    </script>
+</body>
+</html>
