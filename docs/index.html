@@ -541,6 +541,11 @@
                 //console.log(html);
                 //console.log($(html));
                 $(html).each(function(){
+                    if ($(this).hasClass("delay")){
+                        let delayTime = $(this).attr("value");
+                        code += `delay(${delayTime});\n`;
+                        return;
+                    }
                     let keyCombination = $(this).attr("data");
                     if (keyCombination == undefined){
                         return;
