@@ -50,6 +50,14 @@ An ultra low cost, 4 keys mechanical macropad using CH552G.
 
 - SK12F14 switch x 1
 
+
+
+Optional RGB signal lights on the back of the PCB, if you are going with transparent 3D printed case like mine
+
+- 0805 LED x 3
+
+- 0805 10kΩ x 3
+
 ### Photos
 
 ![](assets/README/43af543a7ac50a834bfc96ba4d93be66ecbb337d.jpg)
