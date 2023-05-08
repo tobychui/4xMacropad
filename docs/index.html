@@ -578,15 +578,15 @@
                     }
 
                     if (shiftHolding){
-                        code += `Keyboard_press(KEY_LEFT_SHIFT);\ndelay(30);\n`;
+                        code += `Keyboard_release(KEY_LEFT_SHIFT);\ndelay(30);\n`;
                     }
 
                     if (ctrlHolding){
-                        code += `Keyboard_press(KEY_LEFT_CTRL);\ndelay(30);\n`;
+                        code += `Keyboard_release(KEY_LEFT_CTRL);\ndelay(30);\n`;
                     }
 
                     if (altHolding){
-                        code += `Keyboard_press(KEY_LEFT_ALT);\ndelay(30);\n`;
+                        code += `Keyboard_release(KEY_LEFT_ALT);\ndelay(30);\n`;
                     }
 
                 });
