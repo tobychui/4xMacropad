@@ -8,8 +8,8 @@
 #include "src/userUsbHidMediaKeyboard/USBHIDMediaKeyboard.h"
 
 ////////////// HARDWARE CONFIG //////////
-//CAPSLOCK LED
-#define LED_NUMLOCK 14
+//LED OUTPUT
+#define LED_OUT 14
 
 
 //SCAN LINES
@@ -43,13 +43,13 @@ int keyPressState[5][4] = {
 ///////////////// FUNC PROTOTYPES ///////////////
 void HandleKeyPressEvents(int row, int col, bool previousState, bool currentState);
 void PressNumericAsKeypad(char in);
-void UpdateNumlockState();
+void UpdateLEDState();
 
 
 void setup() {
   USBInit();
   //LED
-  pinMode(LED_NUMLOCK, OUTPUT);
+  pinMode(LED_OUT, OUTPUT);
 
   //Sensing lines
   pinMode(COL_1, INPUT);
@@ -108,10 +108,19 @@ void updateSwitchStatus() {
       if (isKeyDown != prevState){
         //Trigger on change events
         HandleKeyPressEvents(i,j,prevState,isKeyDown);
-        delay(3); //resp time
+        delay(30); //resp time
       }
       keyPressState[i][j] = isKeyDown;
     }
+  }
+}
+
+//Update the LED status
+void UpdateLEDState(){
+  if (funcMode) {
+    digitalWrite(LED_OUT, HIGH);
+  } else {
+    digitalWrite(LED_OUT, LOW);
   }
 }
 
@@ -120,5 +129,5 @@ void loop() {
   updateSwitchStatus();
   
   //Update the NumLock LED
-  UpdateNumlockState();
+  UpdateLEDState();
 }
