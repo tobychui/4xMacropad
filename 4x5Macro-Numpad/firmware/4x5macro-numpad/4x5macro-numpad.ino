@@ -1,5 +1,7 @@
 /*
-    4x5 Macropad Testing Code
+    4x5 Macropad
+
+    if you are using the Numpad arrangement, use the numpad firmware
 */
 #ifndef USER_USB_RAM
 #error "Require USB RAM. Go Tools > USB Setting and pick the 2nd option in the dropdown list"
@@ -47,6 +49,7 @@ void UpdateLEDState();
 
 
 void setup() {
+  delay(300);
   USBInit();
   //LED
   pinMode(LED_OUT, OUTPUT);
@@ -86,7 +89,7 @@ void setScanningRow(int rowNumber) {
   //Activate the target row
   //int targetRowPin = scanRowSeq[rowNumber];
   //digitalWrite(targetRowPin, LOW);
-  //delay(30);  //naive debouncing
+  //delay(50);  //naive debouncing
 }
 
 //Read and return the key press status of a given column
@@ -107,8 +110,9 @@ void updateSwitchStatus() {
       bool prevState = keyPressState[i][j];
       if (isKeyDown != prevState){
         //Trigger on change events
+        
         HandleKeyPressEvents(i,j,prevState,isKeyDown);
-        delay(30); //resp time
+        delay(10); //resp time
       }
       keyPressState[i][j] = isKeyDown;
     }

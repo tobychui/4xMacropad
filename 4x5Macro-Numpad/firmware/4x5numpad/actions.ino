@@ -1,4 +1,3 @@
-
 /*
     HANDLE KEY CHANGES
 
@@ -58,8 +57,8 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 1, col 3
-            //keypad +
-            Keyboard_press('\337');
+            //keypad Enter
+            Keyboard_press('\340');
             break;
         }
         break;
@@ -80,14 +79,6 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 2, col 3
-            if (funcMode) {
-              //Vol Down
-              Consumer_write(MEDIA_VOLUME_DOWN);
-            } else {
-              //Previous Song
-              Consumer_write(MEDIA_PREV);
-            }
-
             break;
         }
         break;
@@ -108,14 +99,8 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 3, col 3
-            if (funcMode) {
-              //Vol Up
-              Consumer_write(MEDIA_VOLUME_UP);
-            } else {
-              //Next Song
-              Consumer_write(MEDIA_NEXT);
-            }
-
+            //keypad +
+            Keyboard_press('\337');
             break;
         }
         break;
@@ -139,8 +124,13 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 4, col 3
-            //keypad -
-            Keyboard_press('\336');
+            if (funcMode){
+               Keyboard_press(KEY_BACKSPACE);
+            }else{
+              //keypad -
+              Keyboard_press('\336');
+            }
+            
             break;
         }
         break;
@@ -195,8 +185,8 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 1, col 3
-            //keypad +
-            Keyboard_release('\337');
+            //Keypad Enter
+            Keyboard_release('\340');
             break;
         }
         break;
@@ -238,8 +228,8 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 3, col 3
-            // Handled in key-down events
-
+            //keypad +
+            Keyboard_release('\337');
             break;
         }
         break;
@@ -263,8 +253,12 @@ void HandleKeyPressEvents(int row, int col, bool previousState, bool currentStat
             break;
           case 3:
             // Case: row 4, col 3
-            //keypad -
-            Keyboard_release('\336');
+            if (funcMode){
+              Keyboard_release(KEY_BACKSPACE);
+            }else{
+              //keypad -
+              Keyboard_release('\336');
+            }
             break;
         }
         break;

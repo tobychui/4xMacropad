@@ -20,8 +20,6 @@ An ultra low cost, 4 keys mechanical macropad using CH552G.
 
 6. Flash the CH552G with the sketch
 
-
-
 ### Program Flashing Instructions
 
 1. Hold and press the PROG button on the PCB
@@ -31,8 +29,6 @@ An ultra low cost, 4 keys mechanical macropad using CH552G.
 3. Release the button when the Arduino code has finished compiling and ready to upload (Timing is important)
 
 4. Wait for the upload to complete
-
-
 
 ### Bill of materials
 
@@ -49,8 +45,6 @@ An ultra low cost, 4 keys mechanical macropad using CH552G.
 - SOP-16 CH552G  x 1
 
 - SK12F14 switch x 1
-
-
 
 Optional RGB signal lights on the back of the PCB, if you are going with transparent 3D printed case like mine
 
@@ -72,7 +66,7 @@ Optional RGB signal lights on the back of the PCB, if you are going with transpa
 
 #### Advance Use-cases
 
-If you want to generate automatic UTF-8 or big5 input to Windows program via this keyboard, it is also possible. See "zh-hk conv tool" folder for more details.
+If you want to generate automatic UTF-8 or big5 input to Windows program via this keyboard, it is also possible. See "tools/zh-hk conv tool" folder for more details.
 
 If you want to make this work with 3rd part key capture software like AutoHotkey, you can use F13 - F24 to send programmable key commands to your PC.  This can be done using the Web Programming interface or the following pre-defined constant (with Keyboard_write) for advance key-bindings
 
