@@ -1,4 +1,4 @@
-## Firwamre Choice Instruction
+## Firmware Choice Instruction
 
 If you are assembling the PCB with standard numpad layout, use the 4x5numpad firmware
 
