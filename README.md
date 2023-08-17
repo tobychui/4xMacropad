@@ -1,4 +1,7 @@
 ## CH552G DIY Mechanical Keyboard Archives
+This archive stores all the required design files for DIY macropads / keyboard of all sizes and layouts. If you are not experience enough to build one or you just want to get a sample before making a few for yourself, you can also find pre-assembled samples on my [Tindie Store](https://www.tindie.com/stores/tobychui/). 
+
+Gerber files of PCB files will be released with each of the new layout release without the schematics. The schematics will be released following the next layout / design to make sure I got enough funding to iterate more layout and open source them for free. Thank you for your understanding!
 
 ## 4xMacropad
 
@@ -43,5 +46,3 @@ As all the keyboard designs share the same MCU and programming button design, th
 Software: MIT License
 
 Hardware: CC BY-NC-SA
-
-**For those who don't want to read the CC license, NC means non-commercial only and SA means if you modified this work, you must also open source it with similar licensing requirements.**
